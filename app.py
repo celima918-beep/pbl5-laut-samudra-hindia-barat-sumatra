@@ -4,12 +4,16 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-st.set_page_config(page_title="Estimasi Stok Ikan Sumatra", layout="wide")
+st.set_page_config(page_title="Estimasi Stok Ikan Sumatra - Kelompok 9", layout="wide")
+
+# Menampilkan identitas anggota kelompok 9 pada bagian paling atas aplikasi
+st.subheader("Kelompok 9")
+st.text("1. Ina Rani Amelia (10090224002)\n2. Nayla Dwi Safitri (10090224007)\n3. Celi Maulidi Aprilia (10090224027)")
 
 st.title("🐟 Estimasi Stok Ikan Berbasis Data Satelit")
 st.write("Simulasi integrasi data oseanografi Suhu dan Klorofil untuk memprediksi fluktuasi biomassa perairan barat Sumatra.")
 
-# Memasukkan data riil Sumatra Anda langsung ke dalam struktur tabel program
+# Memasukkan data riil 4 kolom milik Anda langsung ke dalam struktur data program
 data_sumatra = {
     "Bulan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     "Nama_Bulan": ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"],
@@ -26,7 +30,7 @@ suhu_optimal = st.sidebar.slider("Suhu Optimal Ikan (°C)", 25.00, 35.00, 28.50,
 alfa_klorofil = st.sidebar.slider("Faktor Pengali Klorofil (α)", 500, 5000, 3000, 100)
 beta_penalti_suhu = st.sidebar.slider("Faktor Penalti Suhu (β)", 100, 1000, 500, 50)
 
-# Menghitung rumus estimasi stok ikan secara otomatis
+# Menghitung rumus estimasi stok ikan secara otomatis menggunakan konstanta luas 1000
 luas_konstan = 1000
 df["Penalti_Suhu"] = (df["Suhu_Laut_C"] - suhu_optimal).abs() * beta_penalti_suhu
 df["Estimasi_Stok"] = (luas_konstan * 1.5) + (df["Klorofil"] * alfa_klorofil) - df["Penalti_Suhu"]
