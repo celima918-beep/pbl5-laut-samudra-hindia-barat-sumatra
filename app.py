@@ -9,13 +9,9 @@ st.set_page_config(page_title="Estimasi Stok Ikan Sumatra", layout="wide")
 st.title("🐟 Estimasi Stok Ikan Berbasis Data Satelit")
 st.write("Simulasi integrasi data oseanografi Suhu dan Klorofil untuk memprediksi fluktuasi biomassa perairan barat Sumatra.")
 
-# 1. Membaca data dari file CSV riil Anda
+# 1. Membaca data riil dari berkas CSV 4 kolom milik Anda
 try:
-    df_awal = pd.read_csv("Data Laut Samudra Hindia Barat Sumatra.csv")
-    
-    # Menghapus kolom kelima (Luas Habitat) agar tidak masuk ke pemrosesan tabel
-    kolom_kelima = df_awal.columns[4]
-    df = df_awal.drop(columns=[kolom_kelima])
+    df = pd.read_csv("Data Laut Samudra Hindia Barat Sumatra.csv")
 except Exception as e:
     st.error(f"Gagal membaca file CSV. Pastikan file 'Data Laut Samudra Hindia Barat Sumatra.csv' sudah diunggah ke GitHub. Error: {e}")
     st.stop()
@@ -29,7 +25,7 @@ alfa_klorofil = st.sidebar.slider("Faktor Pengali Klorofil (α)", 500, 5000, 300
 beta_penalti_suhu = st.sidebar.slider("Faktor Penalti Suhu (β)", 100, 1000, 500, 50)
 
 # 3. Menghitung rumus estimasi stok ikan secara otomatis
-# Kita langsung memakai angka konstan 1000 di dalam rumus tanpa memanggil nama kolom lagi
+# Kita langsung memakai angka konstan 1000 karena kolom kelima tidak ada di CSV Anda
 luas_konstan = 1000
 df["Penalti_Suhu"] = (df["Suhu_Laut_C"] - suhu_optimal).abs() * beta_penalti_suhu
 df["Estimasi_Stok"] = (luas_konstan * 1.5) + (df["Klorofil"] * alfa_klorofil) - df["Penalti_Suhu"]
@@ -54,6 +50,6 @@ with col2:
     fig2.update_layout(xaxis_title="Bulan", yaxis_title="Estimasi Stok")
     st.plotly_chart(fig2, use_container_width=True)
 
-# 5. Tampilan tabel detail data mentah di bagian bawah tanpa kolom kelima
-st.write("### Lihat Detail Data Mentah (Tanpa Kolom Kelima)")
+# 5. Tampilan tabel detail data mentah di bagian bawah
+st.write("### Lihat Detail Data Mentah")
 st.dataframe(df[["Bulan", "Nama_Bulan", "Suhu_Laut_C", "Klorofil", "Estimasi_Stok"]], use_container_width=True)
