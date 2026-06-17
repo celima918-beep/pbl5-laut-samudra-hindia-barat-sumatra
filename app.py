@@ -10,12 +10,10 @@ st.title("🐟 Estimasi Stok Ikan Berbasis Data Satelit")
 st.write("Simulasi integrasi data oseanografi Suhu dan Klorofil untuk memprediksi fluktuasi biomassa perairan barat Sumatra.")
 
 # 1. Membaca data dari file CSV riil Anda
-# Program menggunakan nama file yang Anda unggah ke GitHub
 try:
     df_awal = pd.read_csv("Data Laut Samudra Hindia Barat Sumatra.csv")
     
-    # Menghapus kolom kelima (Luas Habitat) agar tidak masuk ke pemrosesan
-    # iloc[:, 4] merujuk pada kolom indeks ke 4 alias kolom kelima
+    # Menghapus kolom kelima (Luas Habitat) agar tidak masuk ke pemrosesan tabel
     kolom_kelima = df_awal.columns[4]
     df = df_awal.drop(columns=[kolom_kelima])
 except Exception as e:
@@ -31,7 +29,7 @@ alfa_klorofil = st.sidebar.slider("Faktor Pengali Klorofil (α)", 500, 5000, 300
 beta_penalti_suhu = st.sidebar.slider("Faktor Penalti Suhu (β)", 100, 1000, 500, 50)
 
 # 3. Menghitung rumus estimasi stok ikan secara otomatis
-# Karena kolom kelima tidak dimasukkan, kita menggunakan nilai konstan 1000 untuk perhitungan rumus
+# Kita langsung memakai angka konstan 1000 di dalam rumus tanpa memanggil nama kolom lagi
 luas_konstan = 1000
 df["Penalti_Suhu"] = (df["Suhu_Laut_C"] - suhu_optimal).abs() * beta_penalti_suhu
 df["Estimasi_Stok"] = (luas_konstan * 1.5) + (df["Klorofil"] * alfa_klorofil) - df["Penalti_Suhu"]
