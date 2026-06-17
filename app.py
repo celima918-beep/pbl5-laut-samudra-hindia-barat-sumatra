@@ -1,69 +1,55 @@
+import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# 1. Membaca data riil perairan barat Sumatra milik Anda
-print("Membaca data riil Sumatra...")
-df = pd.read_csv("Data Laut Samudra Hindia Barat Sumatra.csv")
+st.set_page_config(page_title="Estimasi Stok Ikan Sumatra", layout="wide")
 
-# 2. Menentukan parameter model estimasi sesuai standar aplikasi
-suhu_optimal = 28.50
-alfa_klorofil = 3000
-beta_penalti_suhu = 500
+st.title("🐟 Estimasi Stok Ikan Berbasis Data Satelit")
+st.write("Simulasi integrasi data oseanografi Suhu dan Klorofil untuk memprediksi fluktuasi biomassa perairan barat Sumatra.")
 
-# 3. Menghitung rumus estimasi stok ikan bulanan
-print("Menghitung estimasi stok ikan berdasarkan rumus model...")
-# Menghitung selisih absolut suhu terhadap suhu optimal ikan
+# Membuat data riil Sumatra milik Anda langsung di dalam kode program
+data_riil = {
+    "Bulan": ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"],
+    "Suhu_Laut_C": [29.09, 29.02, 29.39, 29.74, 30.02, 30.07, 29.88, 29.61, 29.41, 29.75, 29.44, 29.24],
+    "Klorofil_a": [0.21651414, 0.19403403, 0.17957865, 0.16867486, 0.1776436, 0.17800032, 0.18564603, 0.20808287, 0.1887339, 0.17397971, 0.27566928, 0.25348687],
+    "Luas_Habitat": [475248, 475248, 475248, 475248, 475248, 475248, 475248, 475248, 475248, 475248, 475248, 475248]
+}
+df = pd.DataFrame(data_riil)
+
+# Membuat panel input parameter model estimasi di sebelah kiri
+st.sidebar.header("Parameter Model Estimasi")
+st.sidebar.write("Sesuaikan sensitivitas ikan terhadap lingkungan:")
+
+suhu_optimal = st.sidebar.slider("Suhu Optimal Ikan (°C)", 25.00, 35.00, 28.50, 0.10)
+alfa_klorofil = st.sidebar.slider("Faktor Pengali Klorofil (α)", 500, 5000, 3000, 100)
+beta_penalti_suhu = st.sidebar.slider("Faktor Penalti Suhu (β)", 100, 1000, 500, 50)
+
+# Menghitung rumus estimasi stok ikan secara otomatis menggunakan parameter slider
 df["Penalti_Suhu"] = (df["Suhu_Laut_C"] - suhu_optimal).abs() * beta_penalti_suhu
-
-# Rumus integrasi: (Luas Habitat * 1.5) + (Klorofil * Alfa) - Penalti Suhu
-df["Estimasi_Stok"] = (df["Luas Habitat"] * 1.5) + (df["Klorofil"] * alfa_klorofil) - df["Penalti_Suhu"]
-
-# Membulatkan hasil kalkulasi agar tidak ada angka desimal di belakang koma
+df["Estimasi_Stok"] = (df["Luas_Habitat"] * 1.5) + (df["Klorofil_a"] * alfa_klorofil) - df["Penalti_Suhu"]
 df["Estimasi_Stok"] = df["Estimasi_Stok"].round(0).astype(int)
 
-# 4. Menampilkan hasil kalkulasi ke layar console
-print("\nHASIL ESTIMASI STOK IKAN PERAIRAN BARAT SUMATRA TAHUN 2025:")
-print(df[["Nama_Bulan", "Suhu_Laut_C", "Klorofil", "Estimasi_Stok"]].to_string(index=False))
+# Membuat tampilan visualisasi grafik atas
+col1, col2 = st.columns(2)
 
-# 5. Membuat grafik visualisasi interaktif dua sumbu (Dual Axis)
-print("\nMembuat grafik visualisasi interaktif...")
-fig = make_subplots(specs=[[{"secondary_y": True}]])
+with col1:
+    st.write("### Tren Suhu dan Klorofil Bulanan")
+    fig1 = make_subplots(specs=[[{"secondary_y": True}]])
+    fig1.add_trace(go.Scatter(x=df["Bulan"], y=df["Suhu_Laut_C"], name="Suhu (°C)", mode="lines+markers", line=dict(color="crimson")), secondary_y=False)
+    fig1.add_trace(go.Scatter(x=df["Bulan"], y=df["Klorofil_a"], name="Klorofil (mg/m³)", mode="lines+markers", line=dict(color="green", dash="dash")), secondary_y=True)
+    fig1.update_layout(xaxis_title="Bulan", yaxis_title="Suhu Laut (°C)", yaxis2_title="Klorofil_a (mg/m³)", legend=dict(x=1.1, y=1.1))
+    st.plotly_chart(fig1, use_container_width=True)
 
-# Menambahkan grafik batang untuk Estimasi Stok Ikan
-fig.add_trace(
-    go.Bar(
-        x=df["Nama_Bulan"],
-        y=df["Estimasi_Stok"],
-        name="Estimasi Stok (Biomassa)",
-        marker_color="cadetblue"
-    ),
-    secondary_y=False
-)
+with col2:
+    st.write("### Fluktuasi Estimasi Stok Ikan (Biomassa)")
+    fig2 = go.Figure()
+    fig2.add_trace(go.Bar(x=df["Bulan"], y=df["Estimasi_Stok"], name="Estimasi Stok", marker_color="cadetblue"))
+    fig2.add_trace(go.Scatter(x=df["Bulan"], y=df["Estimasi_Stok"], mode="lines+markers", line=dict(color="orange"), name="Tren"))
+    fig2.update_layout(xaxis_title="Bulan", yaxis_title="Estimasi Stok")
+    st.plotly_chart(fig2, use_container_width=True)
 
-# Menambahkan grafik garis untuk Tren Klorofil
-fig.add_trace(
-    go.Scatter(
-        x=df["Nama_Bulan"],
-        y=df["Klorofil"],
-        name="Klorofil_a (mg/m³)",
-        mode="lines+markers",
-        line=dict(color="green", width=2, dash="dash")
-    ),
-    secondary_y=True
-)
-
-# Mengatur tampilan tata letak (layout) grafik
-fig.update_layout(
-    title="Dashboard Analisis Estimasi Stok Ikan Berbasis Data Satelit Sumatra 2025",
-    xaxis_title="Bulan",
-    yaxis_title="Estimasi Stok (Biomassa)",
-    yaxis2_title="Konsentrasi Klorofil_a (mg/m³)",
-    hovermode="x unified",
-    legend=dict(x=1.05, y=1)
-)
-
-# Menyimpan grafik menjadi file HTML dan membukanya otomatis di browser
-fig.write_html("dashboard_estimasi_stok_sumatra.html")
-print("Selesai! Grafik interaktif tersimpan dengan nama: dashboard_estimasi_stok_sumatra.html")
-fig.show()
+# Tampilan tabel detail data mentah di bagian bawah
+st.write("### Lihat Detail Data Mentah")
+st.dataframe(df[["Bulan", "Suhu_Laut_C", "Klorofil_a", "Estimasi_Stok"]], use_container_width=True)
